@@ -1,8 +1,11 @@
-groq
 fastapi
-uvicorn[standard]
+uvicorn
 sqlalchemy
-python-dotenv
 pydantic
-psycopg2-binary
-python-multipart
+pydantic-settings
+streamlit
+openai
+google-generativeai
+groq
+python-dotenv
+requests
