@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask-first — AI Chat with Memory</title>
+    <meta name="description" content="An intelligent AI chat assistant that remembers your preferences across all conversations.">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Ambient background orbs -->
+    <div class="bg-orbs" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span class="brand-icon">✦</span>
+            <span>Ask-first</span>
+        </div>
+        
+        <div class="status-indicator">
+            <span class="dot" id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+        </div>
+
+        <button class="btn-new-thread" id="btn-new-thread" onclick="createNewThread()">
+            <span class="btn-icon-plus">＋</span>
+            <span>New Thread</span>
+        </button>
+
+        <div class="sidebar-section">
+            <div class="section-label">Conversations</div>
+            <div class="threads-list" id="threads-container">
+                <div class="empty-threads">
+                    <div class="empty-threads-icon">💬</div>
+                    <div>No threads yet</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="memory-panel">
+            <button class="memory-header" onclick="toggleMemory()" aria-expanded="false" id="memory-toggle">
+                <div class="memory-header-left">
+                    <span class="memory-icon">🧠</span>
+                    <span>Universal Memory</span>
+                </div>
+                <div class="memory-header-right">
+                    <span class="memory-badge" id="memory-count">0</span>
+                    <span class="memory-chevron" id="memory-chevron">›</span>
+                </div>
+            </button>
+            <div class="memory-list" id="memory-container">
+                <!-- Memories will be injected here -->
+            </div>
+            <button class="btn-clear-memory" id="btn-clear-memory" onclick="clearAllMemories()" style="display:none;">
+                Clear all memories
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="main-area">
+        <div class="toast-container" id="toast-container"></div>
+        
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
+                <div>
+                    <div class="chat-title" id="chat-title">Select a Thread</div>
+                    <div class="chat-subtitle" id="chat-subtitle">Ask-first AI Assistant</div>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="btn-header-action" id="btn-rename" onclick="renameThread()" title="Rename thread" style="display:none;">✏️</button>
+                <button class="btn-header-action danger" id="btn-delete-thread" onclick="deleteCurrentThread()" title="Delete thread" style="display:none;">🗑️</button>
+            </div>
+        </header>
+
+        <div class="chat-container" id="chat-container">
+            <div class="welcome-state">
+                <div class="welcome-logo">✦</div>
+                <h1 class="welcome-title">Welcome to Ask-first</h1>
+                <p class="welcome-subtitle">Your AI assistant that remembers you across all conversations.</p>
+                <div class="welcome-features">
+                    <div class="feature-chip">🧠 Persistent Memory</div>
+                    <div class="feature-chip">💬 Multi-thread Chat</div>
+                    <div class="feature-chip">⚡ Fast AI Responses</div>
+                </div>
+                <button class="btn-welcome-start" onclick="createNewThread()">Start Chatting →</button>
+            </div>
+        </div>
+
+        <div class="input-area" id="input-area">
+            <div class="input-container" id="input-container">
+                <textarea 
+                    id="chat-input" 
+                    class="chat-input" 
+                    placeholder="Message Ask-first..." 
+                    disabled
+                    rows="1"
+                    oninput="autoResize(this)"
+                    onkeydown="handleEnter(event)"></textarea>
+                <button class="btn-send" id="btn-send" disabled onclick="sendMessage()" aria-label="Send message">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+        </div>
+    </main>
+
+    <script src="/script.js"></script>
+</body>
+</html>

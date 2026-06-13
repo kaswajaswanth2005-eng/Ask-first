@@ -28,8 +28,9 @@ from typing import List, Optional
 
 import groq
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -68,6 +69,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+api_router = APIRouter(prefix="/api")
 
 # Create DB tables on startup (safe: skips if tables already exist)
 create_tables()
@@ -243,7 +246,7 @@ def build_system_prompt(memories: List[str]) -> str:
 # Thread Endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/threads", response_model=ThreadResponse, status_code=201)
+@api_router.post("/threads", response_model=ThreadResponse, status_code=201)
 def create_thread(payload: ThreadCreate, db: Session = Depends(get_db)):
     """Create a new chat thread with an optional title."""
     thread = Thread(title=payload.title.strip() if payload.title else "New Thread")
@@ -258,7 +261,7 @@ def create_thread(payload: ThreadCreate, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/threads", response_model=List[ThreadResponse])
+@api_router.get("/threads", response_model=List[ThreadResponse])
 def list_threads(db: Session = Depends(get_db)):
     """Return all threads ordered by creation time (newest first), with message counts."""
     threads = db.query(Thread).order_by(Thread.created_at.desc()).all()
@@ -276,7 +279,7 @@ def list_threads(db: Session = Depends(get_db)):
     return result
 
 
-@app.patch("/threads/{thread_id}", response_model=ThreadResponse)
+@api_router.patch("/threads/{thread_id}", response_model=ThreadResponse)
 def rename_thread(thread_id: int, payload: ThreadRename, db: Session = Depends(get_db)):
     """Rename an existing thread."""
     thread = db.query(Thread).filter(Thread.id == thread_id).first()
@@ -297,7 +300,7 @@ def rename_thread(thread_id: int, payload: ThreadRename, db: Session = Depends(g
     )
 
 
-@app.delete("/threads/{thread_id}", response_model=DeleteResponse)
+@api_router.delete("/threads/{thread_id}", response_model=DeleteResponse)
 def delete_thread(thread_id: int, db: Session = Depends(get_db)):
     """Delete a thread and all its messages (cascade)."""
     thread = db.query(Thread).filter(Thread.id == thread_id).first()
@@ -312,7 +315,7 @@ def delete_thread(thread_id: int, db: Session = Depends(get_db)):
 # Message Endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/messages/{thread_id}", response_model=List[MessageResponse])
+@api_router.get("/messages/{thread_id}", response_model=List[MessageResponse])
 def get_messages(thread_id: int, db: Session = Depends(get_db)):
     """Return all messages in a given thread, ordered by timestamp."""
     thread = db.query(Thread).filter(Thread.id == thread_id).first()
@@ -337,7 +340,7 @@ def get_messages(thread_id: int, db: Session = Depends(get_db)):
     ]
 
 
-@app.delete("/messages/{message_id}", response_model=DeleteResponse)
+@api_router.delete("/messages/{message_id}", response_model=DeleteResponse)
 def delete_message(message_id: int, db: Session = Depends(get_db)):
     """Delete a single message by ID."""
     message = db.query(Message).filter(Message.id == message_id).first()
@@ -352,7 +355,7 @@ def delete_message(message_id: int, db: Session = Depends(get_db)):
 # Chat Endpoint
 # ---------------------------------------------------------------------------
 
-@app.post("/chat", response_model=ChatResponse)
+@api_router.post("/chat", response_model=ChatResponse)
 def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     """
     Main chat endpoint:
@@ -439,7 +442,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
 # Memory Endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/memories", response_model=List[MemoryResponse])
+@api_router.get("/memories", response_model=List[MemoryResponse])
 def list_memories(db: Session = Depends(get_db)):
     """Return all stored memories with full details (id, text, created_at)."""
     memories = db.query(Memory).order_by(Memory.created_at).all()
@@ -453,7 +456,7 @@ def list_memories(db: Session = Depends(get_db)):
     ]
 
 
-@app.delete("/memories/{memory_id}", response_model=DeleteResponse)
+@api_router.delete("/memories/{memory_id}", response_model=DeleteResponse)
 def delete_memory(memory_id: int, db: Session = Depends(get_db)):
     """Delete a specific memory by ID."""
     memory = db.query(Memory).filter(Memory.id == memory_id).first()
@@ -464,7 +467,7 @@ def delete_memory(memory_id: int, db: Session = Depends(get_db)):
     return DeleteResponse(success=True, detail=f"Memory {memory_id} deleted.")
 
 
-@app.delete("/memories", response_model=DeleteResponse)
+@api_router.delete("/memories", response_model=DeleteResponse)
 def clear_all_memories(db: Session = Depends(get_db)):
     """Delete ALL stored memories. Use with caution."""
     count = db.query(Memory).count()
@@ -477,7 +480,7 @@ def clear_all_memories(db: Session = Depends(get_db)):
 # Utility Endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/health")
+@api_router.get("/health")
 def health_check():
     """Simple health check — used by Render's uptime monitoring."""
     return {
@@ -486,3 +489,9 @@ def health_check():
         "model": MODEL,
         "version": "2.0.0",
     }
+
+app.include_router(api_router)
+
+# Serve the frontend locally (Vercel will serve it natively via vercel.json)
+if os.path.isdir("public"):
+    app.mount("/", StaticFiles(directory="public", html=True), name="public")
