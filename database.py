@@ -30,8 +30,10 @@ load_dotenv()  # Load variables from .env file
 
 # Reads DATABASE_URL from .env.
 # - Local default  : SQLite  (chat_app.db in project folder)
+# - Vercel default : SQLite  (/tmp/chat_app.db in /tmp folder, since Vercel is read-only)
 # - Production     : Set DATABASE_URL=postgresql://user:pass@host:5432/dbname
-DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./chat_app.db")
+_default_db_path = "/tmp/chat_app.db" if os.getenv("VERCEL") else "./chat_app.db"
+DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{_default_db_path}")
 
 # SQLite needs check_same_thread=False; other DBs don't need it but it's harmless.
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
