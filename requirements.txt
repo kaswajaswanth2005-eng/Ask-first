@@ -1,0 +1,10 @@
+groq
+fastapi
+uvicorn[standard]
+streamlit
+sqlalchemy
+python-dotenv
+requests
+pydantic
+psycopg2-binary
+pymysql
